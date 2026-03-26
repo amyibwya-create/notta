@@ -1,6 +1,6 @@
 import { CampaignContext } from '@/types/campaign'
 import { ClipVariation } from '@/types/clip'
-import { callClaudeJSON } from '@/lib/claude'
+import { callClaudeJSON, SMART_MODEL } from '@/lib/claude'
 import { REWRITE_SYSTEM_PROMPT, buildRewriteUserMessage } from '@/lib/prompts/rewrite.prompt'
 import { RewriteResponseSchema } from '@/lib/validators'
 
@@ -24,7 +24,7 @@ export async function runRewriteStage(
     const batch = clips.slice(i, i + BATCH_SIZE)
     const response = await callClaudeJSON(
       {
-        model: 'claude-sonnet-4-6',
+        model: SMART_MODEL,
         systemPrompt: REWRITE_SYSTEM_PROMPT,
         userMessage: buildRewriteUserMessage(batch, context),
         maxTokens: 4096,

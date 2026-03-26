@@ -1,6 +1,6 @@
 import { CampaignContext } from '@/types/campaign'
 import { AdClip, ClipRecommendation, ClipVariation } from '@/types/clip'
-import { callClaudeJSON } from '@/lib/claude'
+import { callClaudeJSON, FAST_MODEL } from '@/lib/claude'
 import { SCORE_SYSTEM_PROMPT, buildScoreUserMessage } from '@/lib/prompts/score.prompt'
 import { ScoreResponseSchema } from '@/lib/validators'
 
@@ -43,7 +43,7 @@ export async function runScoreStage(
 
     const response = await callClaudeJSON(
       {
-        model: 'claude-haiku-4-5-20251001',
+        model: FAST_MODEL,
         systemPrompt: SCORE_SYSTEM_PROMPT,
         userMessage: buildScoreUserMessage(batch, context),
         maxTokens: 2048,

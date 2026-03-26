@@ -1,6 +1,6 @@
 import { CampaignContext } from '@/types/campaign'
 import { AnalysisResult, TranscriptSegment } from '@/types/transcript'
-import { callClaudeJSON } from '@/lib/claude'
+import { callClaudeJSON, FAST_MODEL } from '@/lib/claude'
 import { ANALYZE_SYSTEM_PROMPT, buildAnalyzeUserMessage } from '@/lib/prompts/analyze.prompt'
 import { AnalysisResponseSchema } from '@/lib/validators'
 
@@ -15,7 +15,7 @@ export async function runAnalyzeStage(
 
   const response = await callClaudeJSON(
     {
-      model: 'claude-haiku-4-5-20251001',
+      model: FAST_MODEL,
       systemPrompt: ANALYZE_SYSTEM_PROMPT,
       userMessage: buildAnalyzeUserMessage(truncated, context),
       maxTokens: 4096,

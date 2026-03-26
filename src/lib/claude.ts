@@ -5,7 +5,12 @@ const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 })
 
-export type ClaudeModel = 'claude-sonnet-4-6' | 'claude-haiku-4-5-20251001'
+// Default to Claude 3.5 models (widely available).
+// Override via CLAUDE_FAST_MODEL / CLAUDE_SMART_MODEL env vars if you have access to newer tiers.
+export const FAST_MODEL = process.env.CLAUDE_FAST_MODEL ?? 'claude-3-5-haiku-20241022'
+export const SMART_MODEL = process.env.CLAUDE_SMART_MODEL ?? 'claude-3-5-sonnet-20241022'
+
+export type ClaudeModel = string
 
 export interface ClaudeCallParams {
   model: ClaudeModel

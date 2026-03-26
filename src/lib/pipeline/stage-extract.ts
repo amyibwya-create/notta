@@ -1,7 +1,7 @@
 import { CampaignContext } from '@/types/campaign'
 import { TranscriptSegment } from '@/types/transcript'
 import { AdClip } from '@/types/clip'
-import { callClaudeJSON } from '@/lib/claude'
+import { callClaudeJSON, SMART_MODEL } from '@/lib/claude'
 import { EXTRACT_SYSTEM_PROMPT, buildExtractUserMessage } from '@/lib/prompts/extract.prompt'
 import { ExtractResponseSchema } from '@/lib/validators'
 
@@ -13,7 +13,7 @@ export async function runExtractStage(
 
   const response = await callClaudeJSON(
     {
-      model: 'claude-sonnet-4-6',
+      model: SMART_MODEL,
       systemPrompt: EXTRACT_SYSTEM_PROMPT,
       userMessage: buildExtractUserMessage(actionableSegments, context),
       maxTokens: 2048,
