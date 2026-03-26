@@ -14,17 +14,25 @@ export function truncateText(text: string, maxChars: number): string {
   return text.slice(0, maxChars) + '…'
 }
 
-/** Strip markdown code fences that Claude sometimes wraps JSON in */
+/** Strip markdown code fences and fix common Claude JSON issues (trailing commas) */
 export function extractJSON(raw: string): string {
+  let json = raw
   const fenceMatch = raw.match(/```(?:json)?\s*([\s\S]*?)```/)
-  if (fenceMatch) return fenceMatch[1].trim()
-  const firstBrace = raw.indexOf('{')
-  const firstBracket = raw.indexOf('[')
-  if (firstBrace === -1 && firstBracket === -1) return raw
-  const start = firstBrace !== -1 && (firstBracket === -1 || firstBrace < firstBracket)
-    ? firstBrace
-    : firstBracket
-  return raw.slice(start)
+  if (fenceMatch) {
+    json = fenceMatch[1].trim()
+  } else {
+    const firstBrace = raw.indexOf('{')
+    const firstBracket = raw.indexOf('[')
+    if (firstBrace !== -1 || firstBracket !== -1) {
+      const start = firstBrace !== -1 && (firstBracket === -1 || firstBrace < firstBracket)
+        ? firstBrace
+        : firstBracket
+      json = raw.slice(start)
+    }
+  }
+  // Remove trailing commas before } or ] (common in Claude output)
+  json = json.replace(/,(\s*[}\]])/g, '$1')
+  return json
 }
 
 export function formatDuration(ms: number): string {
