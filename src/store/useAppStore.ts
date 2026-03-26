@@ -7,6 +7,8 @@ import { ClipType } from '@/types/clip'
 import { PipelineRun, StageName } from '@/types/pipeline'
 import { SSEEvent } from '@/lib/pipeline/orchestrator'
 import { buildExportBundle, downloadJSON, buildAllClipsText, copyToClipboard } from '@/lib/export'
+import { loadHistory, saveSession, deleteSession as deleteSessionFromStorage, generateTitle } from '@/lib/history'
+import { SessionSummary } from '@/types/session'
 
 interface AppState {
   // Inputs
@@ -23,6 +25,11 @@ interface AppState {
   activeClipTypeFilter: ClipType | 'all'
   selectedClipId: string | null
 
+  // History
+  sessions: SessionSummary[]
+  activeSessionId: string | null
+  sidebarOpen: boolean
+
   // Actions
   setTranscript: (t: string) => void
   setCampaignContext: (c: Partial<CampaignContext>) => void
@@ -33,6 +40,10 @@ interface AppState {
   resetPipeline: () => void
   exportAsJSON: () => void
   copyAllClips: () => Promise<void>
+  newSession: () => void
+  loadSession: (id: string) => void
+  removeSession: (id: string) => void
+  toggleSidebar: () => void
 }
 
 function createInitialRun(): PipelineRun {
@@ -63,6 +74,9 @@ export const useAppStore = create<AppState>()(
       processingError: null,
       activeClipTypeFilter: 'all',
       selectedClipId: null,
+      sessions: [],
+      activeSessionId: null,
+      sidebarOpen: true,
 
       setTranscript: (t) => set({ transcript: t }),
       setCampaignContext: (c) =>
@@ -79,6 +93,45 @@ export const useAppStore = create<AppState>()(
           activeClipTypeFilter: 'all',
           selectedClipId: null,
         }),
+
+      newSession: () =>
+        set({
+          transcript: '',
+          campaignContext: DEFAULT_CAMPAIGN_CONTEXT,
+          userActionabilityPct: null,
+          pipelineRun: null,
+          isProcessing: false,
+          processingError: null,
+          activeClipTypeFilter: 'all',
+          selectedClipId: null,
+          activeSessionId: null,
+        }),
+
+      loadSession: (id) => {
+        const session = get().sessions.find((s) => s.id === id)
+        if (!session) return
+        set({
+          transcript: session.transcript,
+          campaignContext: session.campaignContext,
+          userActionabilityPct: null,
+          pipelineRun: session.pipelineRun,
+          isProcessing: false,
+          processingError: null,
+          activeClipTypeFilter: 'all',
+          selectedClipId: null,
+          activeSessionId: id,
+        })
+      },
+
+      removeSession: (id) => {
+        deleteSessionFromStorage(id)
+        set((s) => ({
+          sessions: s.sessions.filter((sess) => sess.id !== id),
+          activeSessionId: s.activeSessionId === id ? null : s.activeSessionId,
+        }))
+      },
+
+      toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
 
       startPipeline: async () => {
         const { transcript, campaignContext, userActionabilityPct } = get()
@@ -153,7 +206,14 @@ export const useAppStore = create<AppState>()(
         campaignContext: s.campaignContext,
         userActionabilityPct: s.userActionabilityPct,
         pipelineRun: s.pipelineRun,
+        activeSessionId: s.activeSessionId,
+        sidebarOpen: s.sidebarOpen,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state.sessions = loadHistory()
+        }
+      },
     }
   )
 )
@@ -228,9 +288,23 @@ function applySSEEvent(
       break
     }
     case 'pipeline_complete': {
+      const { transcript, campaignContext } = get()
+      const session: SessionSummary = {
+        id: event.run.id,
+        createdAt: event.run.createdAt,
+        title: generateTitle(transcript, campaignContext),
+        clipCount: event.run.clips.length,
+        missedCount: event.run.missedOpportunities.length,
+        campaignContext,
+        transcript,
+        pipelineRun: event.run,
+      }
+      saveSession(session)
       set({
         pipelineRun: event.run,
         isProcessing: false,
+        sessions: loadHistory(),
+        activeSessionId: event.run.id,
       })
       break
     }
