@@ -18,7 +18,7 @@ export async function runAnalyzeStage(
       model: FAST_MODEL,
       systemPrompt: ANALYZE_SYSTEM_PROMPT,
       userMessage: buildAnalyzeUserMessage(truncated, context),
-      maxTokens: 4096,
+      maxTokens: 8192,
       temperature: 0.3,
     },
     (raw) => AnalysisResponseSchema.parse(JSON.parse(raw))

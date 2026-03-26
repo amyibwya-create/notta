@@ -46,7 +46,7 @@ export async function runScoreStage(
         model: FAST_MODEL,
         systemPrompt: SCORE_SYSTEM_PROMPT,
         userMessage: buildScoreUserMessage(batch, context),
-        maxTokens: 2048,
+        maxTokens: 8192,
         temperature: 0.3,
       },
       (raw) => ScoreResponseSchema.parse(JSON.parse(raw))
